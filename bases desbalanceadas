@@ -1,0 +1,29 @@
+pacman::p_load(ade4, arules, car, caret, corrplot, data.table, dplyr, e1071, forcats, funModeling, ggplot2, mlbench, mltools, randomForest, rattle, tidyverse)
+
+# empenhos contratos covid19 
+empenhos_covid19 <- fread('https://dados.sc.gov.br/dataset/4b3d481c-0f57-4443-8e95-a13a49746c0d/resource/aa687a73-92fc-4d49-926a-c3f83f3aed85/download/empenhos_contratos.csv')
+
+empenhos_covid19_D <- acm.disjonctif(as.data.frame(empenhos_covid19$DETIPOCONTRATO))
+names(empenhos_covid19_D) <- c("Outros, "Aquisição", Serviços")
+
+empenhos_covid19 <- cbind(empenhos_covid19, empenhos_covid19_D)
+
+# Discretização
+empenhos_covid19$NUPRAZO <- discretize(empenhos_covid19$NUPRAZO, method = "frequency", breaks = 2, labels = c("baixa", "alta"))
+
+table(empenhos_covid19$NUPRAZO)
+
+# Treino e Teste: Pré-processamento
+particao_empenhos_covid19 = createDataPartition(empenhos_covid19$NUPRAZO, p=.7, list = F) 
+treino_empenhos_covid19 = empenhos_covid19[particao_empenhos_covid19, ] 
+teste_empenhos_covid19 = empenhos_covid19[-particao_empenhos_covid19, ] 
+
+table(treino_empenhos_covid19$NUPRAZO)
+
+# down / under
+treino_empenhos_covid19_Ds <- downSample(x = treino_empenhos_covid19[, -ncol(treino_empenhos_covid19)], y = treino_empenhos_covid19$NUPRAZO)
+table(treino_empenhos_covid19_Ds$Class)   
+
+# up
+treino_empenhos_covid19_Us <- upSample(x = treino_empenhos_covid19[, -ncol(treino_empenhos_covid19)], y = treino_empenhos_covid19$NUPRAZO)
+table(treino_empenhos_covid19_Us$Class)  
